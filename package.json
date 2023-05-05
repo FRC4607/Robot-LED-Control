@@ -10,10 +10,6 @@
   "author": "Logan",
   "license": "MIT",
   "dependencies": {
-    "neopixel": "github:niklauslee/neopixel",
-    "ntcore-ts-client": "^0.2.1",
-    "raspi-serial": "^6.0.0",
-    "serialport": "^10.5.0",
-    "wpilib-nt-client": "^1.7.2"
+    "neopixel": "github:niklauslee/neopixel"
   }
 }
