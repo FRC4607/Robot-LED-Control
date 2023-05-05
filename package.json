@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "kaluma flash ./picoController.js --bundle --shell",
+    "bundle": "kaluma bundle ./picoController.js",
+    "wdeploy": "kaluma flash ./picoWController.js --bundle --shell",
+    "wbundle": "kaluma bundle ./picoWController.js"
   },
   "keywords": [],
   "author": "Logan",
