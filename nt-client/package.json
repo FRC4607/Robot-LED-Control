@@ -1,0 +1,23 @@
+{
+  "name": "leds-nt-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "sudo ts-node index.ts",
+    "deploy": "tsc index.ts && sudo node index.js"
+  },
+  "author": "Logan",
+  "license": "MIT",
+  "dependencies": {
+    "ntcore-ts-client": "^0.2.1",
+    "raspi": "^6.0.1",
+    "raspi-serial": "^6.0.0",
+    "rpi-ws281x-native": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.3",
+    "@types/rpi-ws281x-native": "^1.0.0"
+  }
+}
