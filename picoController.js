@@ -21,59 +21,49 @@ the control flow looks like this:
 //*             Setup and Definitions               *
 //***************************************************
 
-// blink the on board LED to show that the program is running
+// Blink the onboard LED to show that the program is running and responsive
 const led = 25;
 pinMode(led, OUTPUT);
 setInterval(() => {
   digitalToggle(led);
 }, 650);
 
-// pins (gpio)
-const PILLAR_FL_PIN = 27;
-const PILLAR_FR_PIN = 22;
-const PILLAR_BL_PIN = 18;
-const PILLAR_BR_PIN = 13;
-const CORNER_L_PIN = 9;
-const CORNER_R_PIN = 5;
-
-// strip lengths
-const PILLAR_FL_LENGTH = 25;
-const PILLAR_FR_LENGTH = 25;
-const PILLAR_BL_LENGTH = 13;
-const PILLAR_BR_LENGTH = 13;
-const CORNER_L_LENGTH = 30;
-const CORNER_R_LENGTH = 30;
-
-// create strips
-const pillarFL = new NeoPixel(PILLAR_FL_PIN, PILLAR_FL_LENGTH);
-const pillarFR = new NeoPixel(PILLAR_FR_PIN, PILLAR_FR_LENGTH);
-const pillarBL = new NeoPixel(PILLAR_BL_PIN, PILLAR_BL_LENGTH);
-const pillarBR = new NeoPixel(PILLAR_BR_PIN, PILLAR_BR_LENGTH);
-const cornerL = new NeoPixel(CORNER_L_PIN, CORNER_L_LENGTH);
-const cornerR = new NeoPixel(CORNER_R_PIN, CORNER_R_LENGTH);
-
-// color definitions (these work for all strips, not just the one they are created from below)
-const colors = {
-  red: pillarFL.color(255, 0, 0),
-  green: pillarFL.color(0, 255, 0),
-  blue: pillarFL.color(0, 0, 255),
-  yellow: pillarFL.color(255, 255, 0),
-  magenta: pillarFL.color(255, 0, 255),
-  cyan: pillarFL.color(0, 255, 255),
-  white: pillarFL.color(255, 255, 255),
-  orange: pillarFL.color(255, 165, 0),
-  pink: pillarFL.color(255, 170, 203),
-  redLow: pillarFL.color(25, 0, 0),
-  blueLow: pillarFL.color(0, 0, 25),
-  black: pillarFL.color(0, 0, 0),
+// Pins (gpio) and strip lengths
+const config = {
+  pillarFL: { pin: 27, length: 25 },
+  pillarFR: { pin: 22, length: 25 },
+  pillarBL: { pin: 18, length: 13 },
+  pillarBR: { pin: 13, length: 13 },
+  cornerL: { pin: 9, length: 30 },
+  cornerR: { pin: 5, length: 30 },
 };
-// convert colors object to array for use with some looping stuff
-const colorsArr = Object.values(colors);
 
-// for storing the last color used (in case a color is not specified correctly or command is messed up)
+// Create strips
+const strips = {};
+for (const key in config) {
+  strips[key] = new NeoPixel(config[key].pin, config[key].length);
+}
+
+// Color definitions
+const colors = {
+  red: strips.pillarFL.color(255, 0, 0),
+  green: strips.pillarFL.color(0, 255, 0),
+  blue: strips.pillarFL.color(0, 0, 255),
+  yellow: strips.pillarFL.color(255, 255, 0),
+  magenta: strips.pillarFL.color(255, 0, 255),
+  cyan: strips.pillarFL.color(0, 255, 255),
+  white: strips.pillarFL.color(255, 255, 255),
+  orange: strips.pillarFL.color(255, 165, 0),
+  pink: strips.pillarFL.color(255, 170, 203),
+  redLow: strips.pillarFL.color(25, 0, 0),
+  blueLow: strips.pillarFL.color(0, 0, 25),
+  black: strips.pillarFL.color(0, 0, 0),
+};
+
+// Store the last color used
 let lastColor = colors.pink;
 
-// set up the serial communication
+// Set up the serial communication
 const serialOptions = {
   baudrate: 115200,
   bits: 8,
@@ -87,6 +77,7 @@ const serialOptions = {
 //*               Utility Functions                 *
 //***************************************************
 
+// Translates a given strip string to the corresponding strip object
 function translateSelectedStrip(stripString) {
   switch (stripString) {
     case 'pillarFL':
@@ -102,56 +93,22 @@ function translateSelectedStrip(stripString) {
     case 'cornerR':
       return cornerR;
     default:
-      //serial0.write("1");
+      // Handle unknown strip string
       break;
   }
 }
 
+// Translates a given color string to the corresponding color object and updates the last color used
 function translateSelectedColor(colorString) {
-  switch (colorString) {
-    case 'red':
-      lastColor = colors.red;
-      return colors.red;
-    case 'green':
-      lastColor = colors.green;
-      return colors.green;
-    case 'blue':
-      lastColor = colors.blue;
-      return colors.blue;
-    case 'yellow':
-      lastColor = colors.yellow;
-      return colors.yellow;
-    case 'magenta':
-      lastColor = colors.magenta;
-      return colors.magenta;
-    case 'cyan':
-      lastColor = colors.cyan;
-      return colors.cyan;
-    case 'white':
-      lastColor = colors.white;
-      return colors.white;
-    case 'orange':
-      lastColor = colors.orange;
-      return colors.orange;
-    case 'pink':
-      lastColor = colors.pink;
-      return colors.pink;
-    case 'redLow':
-      lastColor = colors.redLow;
-      return colors.redLow;
-    case 'blueLow':
-      lastColor = colors.blueLow;
-      return colors.blueLow;
-    case 'black':
-      lastColor = colors.black;
-      return colors.black;
-    default:
-      return lastColor;
-      //serial0.write("1");
-      break;
+  if (colors.hasOwnProperty(colorString)) {
+    lastColor = colors[colorString];
+    return colors[colorString];
+  } else {
+    return lastColor;
   }
 }
 
+// Checks if a given string is a valid JSON string
 function isJsonString(str) {
   try {
     JSON.parse(str);
@@ -161,27 +118,22 @@ function isJsonString(str) {
   return true;
 }
 
+// Converts a UTF-8 array to a string
 function Utf8ArrayToStr(array) {
-  var out, i, len, c;
-  var char2, char3;
-
-  out = "";
-  len = array.length;
-  i = 0;
+  let out = "";
+  let len = array.length;
+  let i = 0;
   while (i < len) {
-    c = array[i++];
+    let c = array[i++];
     switch (c >> 4) {
       case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-        // 0xxxxxxx
         out += String.fromCharCode(c);
         break;
       case 12: case 13:
-        // 110x xxxx   10xx xxxx
         char2 = array[i++];
         out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
         break;
       case 14:
-        // 1110 xxxx  10xx xxxx  10xx xxxx
         char2 = array[i++];
         char3 = array[i++];
         out += String.fromCharCode(((c & 0x0F) << 12) |
@@ -190,8 +142,16 @@ function Utf8ArrayToStr(array) {
         break;
     }
   }
-
   return out;
+}
+
+// Blinks the on-board LED of the Pico for a moment to indicate serial activity
+function rapidBlinkActivityIndicator() {
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      digitalToggle(led);
+    }, 100 * i);
+  }
 }
 
 
@@ -199,27 +159,19 @@ function Utf8ArrayToStr(array) {
 //*               Control Functions                 *
 //***************************************************
 
-//np.clear(); // clear the strip (set all pixels to black
-//np.show(); // show the changes
-
-function singleLightTravel(strip, _color, _time, _position, _shiftColorIndex, _random) {
-  const intervalID = setInterval(() => {
-    if (_position === strip.length) {
-      _position = 0;
-      if (_random) {
-        _shiftColorIndex++;
-        if (_shiftColorIndex === colorsArr.length) _shiftColorIndex = 0;
-      }
-    }
-    strip.clear(); // clear the strip (set all pixels to black) if this is off, the pixels will stay on and it will look like a trail till the end
-    (_random) ? strip.setPixel(_position, colorsArr[_shiftColorIndex]) : strip.setPixel(_position, _color);
-    strip.show();
-    _position++;
-  }, _time);
-  return intervalID;
+// Clears the specified strip and displays the changes
+function clearStrip(strip) {
+  strip.clear();
+  strip.show();
 }
 
-// set all pixels to a color
+// Sets a single pixel on the specified strip to the given color and position, and displays the changes
+function setStripPixel(strip, color, position) {
+  strip.setPixel(position, color);
+  strip.show();
+}
+
+// Sets all pixels on the specified strip to the given color and displays the changes
 function setWholeStrip(strip, color) {
   for (let i = 0; i < strip.length; i++) {
     strip.setPixel(i, color);
@@ -227,17 +179,39 @@ function setWholeStrip(strip, color) {
   strip.show();
 }
 
-// set whole robot (all strips) to a color
+// Sets all pixels on all strips to the given color and displays the changes
 function setWholeRobot(color) {
-  setWholeStrip(pillarFL, color);
-  setWholeStrip(pillarFR, color);
-  setWholeStrip(pillarBL, color);
-  setWholeStrip(pillarBR, color);
-  setWholeStrip(cornerL, color);
-  setWholeStrip(cornerR, color);
+  for (const key in strips) {
+    setWholeStrip(strips[key], color);
+  }
 }
 
+// Triggers a single light to travel along the specified strip with the given parameters
+function singleLightTravel(strip, color, time, position, shiftColorIndex, random) {
+  const intervalID = setInterval(() => {
+    if (position === strip.length) {
+      position = 0;
+      if (random) {
+        shiftColorIndex++;
+        if (shiftColorIndex === colorsArr.length) shiftColorIndex = 0;
+      }
+    }
+    clearStrip(strip);
+    setStripPixel(strip, random ? colorsArr[shiftColorIndex] : color, position);
+    position++;
+  }, time);
+  return intervalID;
+}
+
+// Sets a random shuffling rainbow effect on the specified strip
 function setRandomShufflingRainbow(strip, segmentLength, speed) {
+  // Shuffle the array helper function
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
   let offset = 0;
   let totalLength = strip.length;
   const intervalID = setInterval(() => {
@@ -255,14 +229,9 @@ function setRandomShufflingRainbow(strip, segmentLength, speed) {
     }
     offset = (offset + 1) % colorOrder.length;
   }, speed);
-  function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-  }
   return intervalID;
 }
+
 
 //*            Testing Control Functions            *
 
@@ -310,13 +279,12 @@ setTimeout(() => {
 //! If it's not white, it means this is not receiving that command, is the Pi and serial connection good?
 //? Also, if it goes to white and just stays like that, it means the Pi is not receiving the commands from the robot code and just continues to send the white command as default
 
-
+// -------- Serial --------
 const serial0 = new UART(0, serialOptions);
-// read or write data...
-console.log("Serial opened")
+console.log("Serial opened");
 let receivedBufferArr = [];
 
-// on startup, clear the buffer after a seconds (just in case there is any data in the buffer)
+// On startup, clear the buffer after a second (just in case there is any data in the buffer)
 setTimeout(() => {
   receivedBufferArr.length = 0;
 }, 1000);
@@ -326,30 +294,19 @@ setTimeout(() => {
 //*                Serial Functions                 *
 //***************************************************
 
-serial0.on('data', (data) => {
-
-  data.forEach((value) => {
-    receivedBufferArr.push(value);
-  })
-  let stringData = Utf8ArrayToStr(receivedBufferArr);
-  // check if the string ends with /r
-  // if it does, then we have a full string
-  // if it doesn't, then we need to wait for more data
+function processReceivedData(data) {
+  let stringData = Utf8ArrayToStr(data);
+  // If the received string ends with "/r", we have a full command and can proceed
+  // Otherwise we keep waiting for more data
   if (!stringData.endsWith('/r')) {
     return;
   }
 
-  // if we get here, we have a full string
-  // so we can clear the buffer
-  receivedBufferArr.length = 0;
-  // remove the /r from the string
   const stringDataFinal = stringData.slice(0, -2);
-  // rapidly blink the board led 3 times as activity indication light
-  for (let i = 0; i < 3; i++) {
-    setTimeout(() => {
-      digitalToggle(led);
-    }, 100 * i);
-  }
+
+  // Indicate serial activity using the LED
+  rapidBlinkActivityIndicator();
+
   let receivedDataJSON;
   if (isJsonString(stringDataFinal)) {
     receivedDataJSON = JSON.parse(stringDataFinal);
@@ -357,7 +314,9 @@ serial0.on('data', (data) => {
     console.log("Error: invalid or non JSON");
     return;
   }
+
   console.log(receivedDataJSON);
+  // figure out the command and then execute it
   switch (receivedDataJSON.command) {
     case 'setWholeStrip': {
       const strip = translateSelectedStrip(receivedDataJSON.strip);
@@ -371,17 +330,24 @@ serial0.on('data', (data) => {
       break;
     }
     case 'singleLightTravel': {
-      // figure out which strip to set
       const strip = translateSelectedStrip(receivedDataJSON.strip);
       const color = translateSelectedColor(receivedDataJSON.color);
-      // set the interval ID to a variable so we can clear it later
+      // TODO: This returns the interval ID of this sequence running, we need to save it and track it to be able to cancel it later!
       singleLightTravel(strip, color, receivedDataJSON.time, receivedDataJSON.position, receivedDataJSON.shiftColorIndex, receivedDataJSON.random);
       break;
     }
     default:
-      //serial0.write("1");
       break;
   }
+}
+
+// Build up data buffer on incoming data, will process and clear when end signal is received ("/r")
+serial0.on('data', (data) => {
+  data.forEach((value) => {
+    receivedBufferArr.push(value);
+  });
+  processReceivedData(receivedBufferArr);
+  receivedBufferArr.length = 0;
 });
 
-// serial0.close(); // never close it!
+// serial0.close(); // never close it! but this is how..
