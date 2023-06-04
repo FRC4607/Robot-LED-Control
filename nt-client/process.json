@@ -1,0 +1,24 @@
+{
+  "apps": [
+    {
+      "name": "leds",
+      "script": "ts-node /home/cis/blinding/ts-nt/index.ts",
+      "log_date_format": "YYYY-MM-DD HH:mm",
+      "ignoreWatch": [
+        "node_modules"
+      ],
+      "watch": false,
+      "args": [
+        "--color"
+      ],
+      "env": {
+        "DEBUG_COLORS": true
+      }
+    },
+    {
+      "name": "camera",
+      "script": "python -u /home/cis/camera/app/main.py",
+      "log_date_format": "YYYY-MM-DD HH:mm"
+    }
+  ]
+}
